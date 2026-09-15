@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Admin panel (Presensi PKKMB) — scoped so it never leaks into Breeze pages. */
+/* Admin panel (Presensi Osdik) — scoped so it never leaks into Breeze pages. */
 .admin-shell {
     --umk-green: #006636;
     --umk-green-dark: #00381d;
@@ -137,7 +137,7 @@
     .admin-shell #sidebar.open { transform: translateX(0); }
 }
 
-/* Mahasiswa app (Presensi PKKMB) — mobile-first, scoped like .admin-shell. */
+/* Mahasiswa app (Presensi Osdik) — mobile-first, scoped like .admin-shell. */
 .mahasiswa-shell {
     --umk-green: #006636;
     --umk-green-dark: #00381d;
@@ -258,3 +258,84 @@
     text-decoration: none;
 }
 .mahasiswa-shell .navcenter i { font-size: 24px; }
+
+/* Full-screen event display (Layar Presensi) — meant for a projector/TV, no nav chrome. */
+.display-shell {
+    --umk-green: #006636;
+    --umk-green-dark: #00381d;
+    --umk-green-deep: #012814;
+    --umk-gold: #f3f005;
+    --ink-soft-on-dark: #9fc6a9;
+
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--umk-green-deep) 0%, var(--umk-green-dark) 55%, var(--umk-green) 100%);
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+}
+.display-shell h1, .display-shell h2, .display-shell h3, .display-shell .display { font-family: 'Plus Jakarta Sans', sans-serif; }
+.display-shell .layar-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    width: 100%;
+    min-height: 100vh;
+}
+.display-shell .layar-info {
+    padding: 56px 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.display-shell .layar-qr-side {
+    background: #fff;
+    color: var(--ink, #122016);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+}
+.display-shell .layar-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    padding: 18px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.14);
+}
+.display-shell .layar-step:last-child { border-bottom: none; }
+.display-shell .layar-step-num {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--umk-gold);
+    color: #3a3300;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+}
+.display-shell .layar-qr-frame {
+    background: #fff;
+    border: 3px solid #eef1ee;
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: 0 30px 60px -20px rgba(1,20,10,0.25);
+}
+.display-shell .layar-pill {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 999px;
+    letter-spacing: .02em;
+    background: rgba(255,255,255,0.15);
+    display: inline-block;
+}
+@media (max-width: 900px) {
+    .display-shell .layar-grid { grid-template-columns: 1fr; }
+    .display-shell .layar-info { padding: 32px 28px; }
+    .display-shell .layar-qr-side { padding: 32px; }
+}

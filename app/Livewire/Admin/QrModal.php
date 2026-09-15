@@ -66,7 +66,14 @@ class QrModal extends Component
             return;
         }
 
-        if (! $event->current_token || $this->remainingSeconds <= 0) {
+        // Compute staleness directly instead of via the memoized remainingSeconds
+        // computed property, so a fresh rotation here is reflected immediately
+        // when the Blade view reads remainingSeconds later in this same request.
+        $remaining = $event->token_generated_at
+            ? max(0, 60 - $event->token_generated_at->diffInSeconds(now(), true))
+            : 0;
+
+        if (! $event->current_token || $remaining <= 0) {
             $event->rotateToken();
         }
 

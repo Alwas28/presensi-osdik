@@ -35,7 +35,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Kegiatan'])] class extends Compon
 }; ?>
 
 <div class="p-5 pb-2">
-    <h2 class="display font-bold text-base mb-1">Kegiatan PKKMB 2026</h2>
+    <h2 class="display font-bold text-base mb-1">Kegiatan Osdik 2026</h2>
     <p class="text-xs mb-4" style="color:var(--ink-soft);">Daftar rangkaian kegiatan penyambutan mahasiswa baru.</p>
 
     <div class="space-y-3 pb-4">

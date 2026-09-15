@@ -22,7 +22,7 @@ class MahasiswaAuthTest extends TestCase
 
         User::factory()->create([
             'mahasiswa_id' => $mahasiswa->id,
-            'email' => '20260001@mahasiswa.pkkmb.local',
+            'email' => '20260001@mahasiswa.osdik.local',
             'password' => Hash::make('20260001'),
             'role' => 'mahasiswa',
         ]);
@@ -30,15 +30,15 @@ class MahasiswaAuthTest extends TestCase
         return $mahasiswa;
     }
 
-    public function test_mahasiswa_can_login_with_nim_and_default_password(): void
+    public function test_mahasiswa_can_login_with_nim_via_the_shared_login_form(): void
     {
         $this->makeMahasiswaUser();
 
-        Volt::test('pages.mahasiswa.login')
-            ->set('nim', '20260001')
+        Volt::test('pages.auth.login')
+            ->set('identifier', '20260001')
             ->set('password', '20260001')
             ->call('login')
-            ->assertRedirect(route('mahasiswa.beranda'));
+            ->assertRedirect(route('dashboard', absolute: false));
 
         $this->assertAuthenticated();
     }
@@ -47,11 +47,11 @@ class MahasiswaAuthTest extends TestCase
     {
         $this->makeMahasiswaUser();
 
-        Volt::test('pages.mahasiswa.login')
-            ->set('nim', '20260001')
+        Volt::test('pages.auth.login')
+            ->set('identifier', '20260001')
             ->set('password', 'salah')
             ->call('login')
-            ->assertHasErrors('nim');
+            ->assertHasErrors('identifier');
 
         $this->assertGuest();
     }
@@ -63,14 +63,10 @@ class MahasiswaAuthTest extends TestCase
         $this->actingAs($admin)->get(route('mahasiswa.beranda'))->assertForbidden();
     }
 
-    public function test_guest_is_redirected_to_mahasiswa_login_not_the_admin_one(): void
+    public function test_guest_hitting_any_protected_route_goes_to_the_shared_login(): void
     {
-        $this->get(route('mahasiswa.beranda'))->assertRedirect(route('mahasiswa.login'));
-        $this->get('/mahasiswa')->assertRedirect(route('mahasiswa.login'));
-    }
-
-    public function test_guest_hitting_admin_routes_still_goes_to_the_admin_login(): void
-    {
+        $this->get(route('mahasiswa.beranda'))->assertRedirect(route('login'));
+        $this->get('/mahasiswa')->assertRedirect(route('login'));
         $this->get(route('admin.dashboard'))->assertRedirect(route('login'));
     }
 

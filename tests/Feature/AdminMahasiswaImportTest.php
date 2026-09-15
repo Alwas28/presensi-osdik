@@ -62,7 +62,7 @@ class AdminMahasiswaImportTest extends TestCase
 
         $this->assertNotNull($user);
         $this->assertSame('mahasiswa', $user->role);
-        $this->assertSame('22681016@mahasiswa.pkkmb.local', $user->email);
+        $this->assertSame('22681016@mahasiswa.osdik.local', $user->email);
         $this->assertTrue(Hash::check('22681016', $user->password));
     }
 

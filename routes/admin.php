@@ -12,4 +12,5 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Volt::route('mahasiswa', 'pages.admin.mahasiswa')->name('mahasiswa');
     Volt::route('laporan', 'pages.admin.laporan')->name('laporan');
     Volt::route('scan-presensi', 'pages.admin.scan-presensi')->name('scan-presensi');
+    Volt::route('layar', 'pages.admin.layar')->name('layar');
 });

@@ -1,75 +1,106 @@
 <?php
 
-use App\Livewire\Forms\LoginForm;
+use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component
+new #[Layout('layouts.login', ['title' => 'Masuk'])] class extends Component
 {
-    public LoginForm $form;
+    public string $identifier = '';
+
+    public string $password = '';
+
+    public bool $remember = false;
 
     /**
-     * Handle an incoming authentication request.
+     * Handle an incoming authentication request. Mahasiswa sign in with their
+     * NIM, panitia/admin with their email — both share this one form.
      */
     public function login(): void
     {
-        $this->validate();
+        $this->validate([
+            'identifier' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-        $this->form->authenticate();
+        $this->ensureIsNotRateLimited();
 
+        $email = str_contains($this->identifier, '@')
+            ? trim($this->identifier)
+            : trim($this->identifier).'@mahasiswa.osdik.local';
+
+        if (! Auth::attempt(['email' => $email, 'password' => $this->password], $this->remember)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'identifier' => 'NIM/Email atau password salah.',
+            ]);
+        }
+
+        RateLimiter::clear($this->throttleKey());
         Session::regenerate();
 
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }
+
+    /**
+     * Ensure the authentication request is not rate limited.
+     */
+    protected function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        event(new Lockout(request()));
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        throw ValidationException::withMessages([
+            'identifier' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+        ]);
+    }
+
+    /**
+     * Get the authentication rate limiting throttle key.
+     */
+    protected function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->identifier).'|'.request()->ip());
+    }
 }; ?>
 
 <div>
-    <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form wire:submit="login">
-        <!-- Email Address -->
+    <h2 class="display font-bold text-base mb-1 text-center">Masuk</h2>
+    <p class="text-xs text-center mb-5" style="color:var(--ink-soft);">Mahasiswa pakai NIM, panitia/admin pakai email.</p>
+
+    <form wire:submit="login" class="space-y-3">
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input wire:model="form.email" id="email" class="block mt-1 w-full" type="email" name="email" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
+            <label class="text-xs font-semibold block mb-1">NIM / Email</label>
+            <input type="text" class="field-input" wire:model="identifier" autofocus autocomplete="username" placeholder="NIM atau email">
+            @error('identifier') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-
-            <x-text-input wire:model="form.password" id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
-
-            <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
+        <div>
+            <label class="text-xs font-semibold block mb-1">Password</label>
+            <input type="password" class="field-input" wire:model="password" autocomplete="current-password" placeholder="Password">
+            @error('password') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
         </div>
-
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember" class="inline-flex items-center">
-                <input wire:model="form.remember" id="remember" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
+        <div class="flex items-center justify-between">
+            <label class="flex items-center gap-2 text-xs" style="color:var(--ink-soft);">
+                <input type="checkbox" wire:model="remember">
+                Ingat saya
             </label>
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
             @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}" wire:navigate>
-                    {{ __('Forgot your password?') }}
-                </a>
+                <a href="{{ route('password.request') }}" wire:navigate class="text-xs font-semibold" style="color:var(--umk-green);">Lupa password?</a>
             @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
         </div>
+        <button type="submit" class="btn btn-primary w-full justify-center mt-2">Masuk</button>
     </form>
-
-    <p class="text-sm text-gray-600 text-center mt-4">
-        Mahasiswa? <a href="{{ route('mahasiswa.login') }}" wire:navigate class="underline">Masuk di sini</a>
-    </p>
 </div>

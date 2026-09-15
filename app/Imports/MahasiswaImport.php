@@ -110,7 +110,7 @@ class MahasiswaImport implements ToCollection, WithHeadingRow
         User::query()->create([
             'mahasiswa_id' => $mahasiswa->id,
             'name' => $mahasiswa->nama,
-            'email' => "{$mahasiswa->nim}@mahasiswa.pkkmb.local",
+            'email' => "{$mahasiswa->nim}@mahasiswa.osdik.local",
             'password' => Hash::make($mahasiswa->nim),
             'role' => 'mahasiswa',
             'email_verified_at' => now(),

@@ -10,15 +10,14 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Facades\Excel;
 
-class PkkmbDemoSeeder extends Seeder
+class OsdikDemoSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database: real student data from data.xlsx,
-     * the PKKMB 2026 event schedule, admin accounts, and demo attendance.
+     * Seed the application's database: student data from data/mahasiswa.php,
+     * the Osdik 2026 event schedule, admin accounts, and demo attendance.
      */
     public function run(): void
     {
@@ -33,7 +32,7 @@ class PkkmbDemoSeeder extends Seeder
         User::query()->firstOrCreate(
             ['email' => 'superadmin@umkendari.ac.id'],
             [
-                'name' => 'Super Admin PKKMB',
+                'name' => 'Super Admin Osdik',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'super_admin',
@@ -43,7 +42,7 @@ class PkkmbDemoSeeder extends Seeder
         User::query()->firstOrCreate(
             ['email' => 'panitia@umkendari.ac.id'],
             [
-                'name' => 'Panitia PKKMB',
+                'name' => 'Panitia Osdik',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
                 'role' => 'panitia',
@@ -56,19 +55,13 @@ class PkkmbDemoSeeder extends Seeder
      */
     private function importMahasiswa(): array
     {
-        $path = base_path('data.xlsx');
-
-        if (! file_exists($path)) {
-            $this->command?->warn('data.xlsx tidak ditemukan di root proyek, melewati import mahasiswa.');
-
-            return Mahasiswa::query()->pluck('id')->all();
-        }
+        $rows = require __DIR__.'/data/mahasiswa.php';
 
         $importer = new MahasiswaImport;
-        Excel::import($importer, $path);
+        $importer->collection(collect($rows));
 
         $this->command?->info(
-            "Import mahasiswa dari data.xlsx: {$importer->created} baru, {$importer->updated} diperbarui, {$importer->skipped} dilewati."
+            "Import mahasiswa dari seeder: {$importer->created} baru, {$importer->updated} diperbarui, {$importer->skipped} dilewati."
         );
 
         return Mahasiswa::query()->pluck('id')->all();
@@ -80,11 +73,11 @@ class PkkmbDemoSeeder extends Seeder
     private function seedEvents(): array
     {
         $definitions = [
-            ['nama' => 'Pembukaan PKKMB 2026', 'tanggal' => '2026-09-15', 'jam_mulai' => '08:00', 'jam_selesai' => '09:00', 'lokasi' => 'Aula KH. Ahmad Dahlan', 'deskripsi' => 'Sesi pembukaan resmi PKKMB 2026.', 'status' => 'selesai', 'hadirRate' => 0.91],
+            ['nama' => 'Pembukaan Osdik 2026', 'tanggal' => '2026-09-15', 'jam_mulai' => '08:00', 'jam_selesai' => '09:00', 'lokasi' => 'Aula KH. Ahmad Dahlan', 'deskripsi' => 'Sesi pembukaan resmi Osdik 2026.', 'status' => 'selesai', 'hadirRate' => 0.91],
             ['nama' => 'Pengenalan Universitas', 'tanggal' => '2026-09-15', 'jam_mulai' => '09:00', 'jam_selesai' => '10:00', 'lokasi' => 'Aula KH. Ahmad Dahlan', 'deskripsi' => 'Pengenalan profil, visi misi, dan sejarah UM Kendari.', 'status' => 'aktif', 'hadirRate' => 0.87],
             ['nama' => 'Pengenalan Fakultas', 'tanggal' => '2026-09-15', 'jam_mulai' => '10:00', 'jam_selesai' => '11:00', 'lokasi' => 'Gedung fakultas masing-masing', 'deskripsi' => 'Pengenalan pimpinan dan program kerja fakultas.', 'status' => 'belum_dibuka', 'hadirRate' => 0],
             ['nama' => 'Pengenalan Program Studi', 'tanggal' => '2026-09-15', 'jam_mulai' => '13:00', 'jam_selesai' => '15:00', 'lokasi' => 'Ruang prodi masing-masing', 'deskripsi' => 'Pengenalan kurikulum dan dosen program studi.', 'status' => 'belum_dibuka', 'hadirRate' => 0],
-            ['nama' => 'Penutupan', 'tanggal' => '2026-09-16', 'jam_mulai' => '15:00', 'jam_selesai' => '16:00', 'lokasi' => 'Aula KH. Ahmad Dahlan', 'deskripsi' => 'Sesi penutupan rangkaian PKKMB 2026.', 'status' => 'belum_dibuka', 'hadirRate' => 0],
+            ['nama' => 'Penutupan', 'tanggal' => '2026-09-16', 'jam_mulai' => '15:00', 'jam_selesai' => '16:00', 'lokasi' => 'Aula KH. Ahmad Dahlan', 'deskripsi' => 'Sesi penutupan rangkaian Osdik 2026.', 'status' => 'belum_dibuka', 'hadirRate' => 0],
         ];
 
         $events = [];

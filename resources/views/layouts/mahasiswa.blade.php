@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Beranda' }} &middot; Presensi PKKMB UM Kendari</title>
+    <title>{{ $title ?? 'Beranda' }} &middot; Presensi Osdik UM Kendari</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.46.0/tabler-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">

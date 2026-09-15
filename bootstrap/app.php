@@ -16,12 +16,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,
             'mahasiswa' => \App\Http\Middleware\EnsureUserIsMahasiswa::class,
         ]);
-
-        // Guests hitting a /mahasiswa/* URL (an expired session, a bookmarked
-        // link) belong on the NIM-based login, not the panitia/admin one.
-        $middleware->redirectGuestsTo(
-            fn (Request $request) => $request->is('mahasiswa*') ? route('mahasiswa.login') : route('login')
-        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

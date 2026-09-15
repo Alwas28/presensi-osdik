@@ -89,7 +89,7 @@ new #[Layout('layouts.admin', ['title' => 'Kelola kegiatan'])] class extends Com
 
 <div>
     <div class="flex items-center justify-between mb-4">
-        <p class="text-sm" style="color:var(--ink-soft);">Kelola jadwal dan status presensi tiap sesi PKKMB 2026.</p>
+        <p class="text-sm" style="color:var(--ink-soft);">Kelola jadwal dan status presensi tiap sesi Osdik 2026.</p>
         <button class="btn btn-primary" wire:click="openModal"><i class="ti ti-plus"></i>Tambah kegiatan</button>
     </div>
 
@@ -119,6 +119,7 @@ new #[Layout('layouts.admin', ['title' => 'Kelola kegiatan'])] class extends Com
                 <p class="text-xs mb-4" style="color:var(--ink-soft);">{{ number_format($event->attendances_count, 0, ',', '.') }} dari {{ number_format($this->totalMahasiswa, 0, ',', '.') }} mahasiswa sudah presensi</p>
                 <div class="flex flex-wrap gap-2">
                     <button class="btn btn-outline" wire:click="openQr({{ $event->id }})"><i class="ti ti-qrcode"></i>Lihat QR</button>
+                    <a href="{{ route('admin.layar', ['event' => $event->id]) }}" target="_blank" class="btn btn-outline"><i class="ti ti-device-tv"></i>Tampilkan layar</a>
                     <button class="btn btn-outline" wire:click="toggleStatus({{ $event->id }})"><i class="ti {{ $toggleIcon }}"></i>{{ $toggleLabel }}</button>
                     <a href="{{ route('admin.monitoring', ['event' => $event->id]) }}" wire:navigate class="btn btn-ghost"><i class="ti ti-activity"></i>Monitoring</a>
                 </div>

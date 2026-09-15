@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Admin' }} &middot; Presensi PKKMB UM Kendari</title>
+    <title>{{ $title ?? 'Admin' }} &middot; Presensi Osdik UM Kendari</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.46.0/tabler-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +32,7 @@
         <div class="flex items-center gap-2.5 px-5 py-5">
             <div class="flex items-center justify-center rounded-lg flex-shrink-0" style="width:34px;height:34px;background:var(--umk-gold);color:#3a3300;font-weight:800;font-size:13px;">UMK</div>
             <div class="leading-tight">
-                <p class="text-white font-bold text-sm display">Presensi PKKMB</p>
+                <p class="text-white font-bold text-sm display">Presensi Osdik</p>
                 <p class="text-xs" style="color:#9fc6a9;">UM Kendari</p>
             </div>
         </div>
@@ -74,7 +74,7 @@
                 <h1 class="display font-bold text-base md:text-lg">{{ $title ?? 'Dashboard' }}</h1>
             </div>
             <div class="flex items-center gap-3">
-                <span class="hidden md:inline-flex text-xs px-3 py-1.5 rounded-full" style="background:#eef6f0; color:var(--umk-green); font-weight:600;">PKKMB 2026 &middot; 15&ndash;16 September</span>
+                <span class="hidden md:inline-flex text-xs px-3 py-1.5 rounded-full" style="background:#eef6f0; color:var(--umk-green); font-weight:600;">Osdik 2026 &middot; 15&ndash;16 September</span>
                 <livewire:admin.logout-button />
             </div>
         </header>

@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vendor/bin/pint --format agent app database routes tests)"
+    ]
+  }
+}

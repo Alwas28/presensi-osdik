@@ -3,10 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
-Route::middleware('guest')->group(function () {
-    Volt::route('mahasiswa/login', 'pages.mahasiswa.login')->name('mahasiswa.login');
-});
-
 Route::middleware(['auth', 'mahasiswa'])->prefix('mahasiswa')->name('mahasiswa.')->group(function () {
     Route::redirect('/', '/mahasiswa/beranda');
 
