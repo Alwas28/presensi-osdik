@@ -140,7 +140,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
                     </div>
                 @else
                     <div class="flex flex-col items-center text-center">
-                        <div class="flex items-center justify-center p-3 mb-3" style="background:#fff; border:1px solid var(--line); border-radius:12px;"
+                        <div class="flex items-center justify-center p-4 mb-3" style="background:#fff; border:1px solid var(--line); border-radius:12px;"
                              wire:ignore wire:poll.20s="refreshSelfQr"
                              x-effect="renderSelfQr($refs.selfQrWrap, $wire.selfQrPayload)">
                             <div x-ref="selfQrWrap"></div>
@@ -170,7 +170,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
     window.renderSelfQr = window.renderSelfQr || function (wrap, payload) {
         if (!wrap || !payload) return;
         wrap.innerHTML = '';
-        new QRCode(wrap, { text: payload, width: 180, height: 180, colorDark: '#122016', colorLight: '#ffffff' });
+        new QRCode(wrap, { text: payload, width: 240, height: 240, colorDark: '#122016', colorLight: '#ffffff' });
     };
 
     Alpine.data('presensiPanel', () => ({

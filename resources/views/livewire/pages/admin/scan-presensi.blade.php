@@ -41,8 +41,12 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="card p-4" x-data="adminScanner()" x-init="start()">
-            <div class="viewfinder mb-3" style="max-width:360px; margin:0 auto;">
+            <div class="viewfinder mb-3" style="max-width:360px; margin:0 auto; position:relative;">
                 <div id="admin-qr-reader" style="width:100%; height:100%;"></div>
+                <div :style="`position:absolute; inset:0; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:16px; border-radius:inherit; display:${resultOverlay ? 'flex' : 'none'}; background:${resultOverlay && resultOverlay.success ? 'rgba(18,32,22,0.92)' : 'rgba(48,10,10,0.92)'};`">
+                    <i class="ti" :class="resultOverlay && resultOverlay.success ? 'ti-circle-check' : 'ti-circle-x'" style="font-size:48px; color:#fff;"></i>
+                    <p class="font-semibold text-sm mt-2" style="color:#fff;" x-text="resultOverlay ? resultOverlay.text : ''"></p>
+                </div>
             </div>
             <template x-if="cameraError">
                 <p class="text-xs text-center mb-3" style="color:var(--umk-red);">Kamera tidak bisa diakses. Pastikan browser sudah diberi izin kamera (dan halaman dibuka lewat HTTPS atau localhost), lalu coba lagi.</p>
@@ -83,6 +87,7 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
         starting: false,
         html5Qr: null,
         busy: false,
+        resultOverlay: null,
 
         start() {
             if (this.cameraOn || this.starting) return;
@@ -108,8 +113,26 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
                 const onScan = (decodedText) => {
                     if (this.busy) return;
                     this.busy = true;
-                    this.$wire.scan(decodedText).finally(() => {
-                        setTimeout(() => { this.busy = false; }, 1200);
+
+                    // Freeze the camera on the current frame so the still-visible QR
+                    // can't be decoded and processed again while the result is shown.
+                    if (this.html5Qr) {
+                        try { this.html5Qr.pause(true); } catch (e) {}
+                    }
+
+                    this.$wire.scan(decodedText).then(() => {
+                        const entry = (this.$wire.log || [])[0] || null;
+                        this.resultOverlay = entry
+                            ? { success: entry.success, text: entry.success ? (entry.name + ' — presensi berhasil dicatat.') : entry.message }
+                            : null;
+                    }).finally(() => {
+                        setTimeout(() => {
+                            this.resultOverlay = null;
+                            this.busy = false;
+                            if (this.cameraOn && this.html5Qr) {
+                                try { this.html5Qr.resume(); } catch (e) {}
+                            }
+                        }, 2000);
                     });
                 };
                 const onFinished = () => {
@@ -143,6 +166,8 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
         stop() {
             this.cameraOn = false;
             this.starting = false;
+            this.busy = false;
+            this.resultOverlay = null;
             if (this.html5Qr) {
                 const instance = this.html5Qr;
                 this.html5Qr = null;
