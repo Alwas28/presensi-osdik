@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Admin panel (Presensi PKKMB) — scoped so it never leaks into Breeze pages. */
+.admin-shell {
+    --umk-green: #006636;
+    --umk-green-dark: #00381d;
+    --umk-green-deep: #012814;
+    --umk-gold: #f3f005;
+    --umk-red: #a10101;
+    --paper: #f4f7f2;
+    --ink: #122016;
+    --ink-soft: #5b665d;
+    --line: #e2e8e1;
+    --sidebar-w: 240px;
+
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+}
+.admin-shell h1,
+.admin-shell h2,
+.admin-shell h3,
+.admin-shell .display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.admin-shell .card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+.admin-shell .btn {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: .15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.admin-shell .btn-primary { background: var(--umk-green); color: #fff; }
+.admin-shell .btn-primary:hover { background: var(--umk-green-dark); }
+.admin-shell .btn-outline { background: #fff; color: var(--umk-green); border-color: var(--umk-green); }
+.admin-shell .btn-outline:hover { background: #eef6f0; }
+.admin-shell .btn-ghost { background: transparent; color: var(--ink-soft); }
+.admin-shell .btn-ghost:hover { background: #eef1ee; }
+.admin-shell .btn-danger { background: #fff; color: var(--umk-red); border-color: #f0c6c6; }
+.admin-shell .btn-danger:hover { background: #fdf1f1; }
+.admin-shell .pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    display: inline-block;
+    letter-spacing: .02em;
+}
+.admin-shell .pill-active { background: #e2f4e6; color: #0a6b34; }
+.admin-shell .pill-closed { background: #f2f2f2; color: #6b6b6b; }
+.admin-shell .pill-notyet { background: #fdf3d8; color: #8a6a00; }
+.admin-shell .pill-done { background: #e6eefc; color: #1d4ea0; }
+.admin-shell .pill-draft { background: #f5f0fa; color: #6b3fa0; }
+.admin-shell .navlink {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #cfe4d4;
+    cursor: pointer;
+    transition: .15s;
+}
+.admin-shell .navlink:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.admin-shell .navlink.active { background: rgba(255,255,255,0.14); color: #fff; }
+.admin-shell .navlink i { font-size: 18px; }
+.admin-shell table { border-collapse: collapse; width: 100%; }
+.admin-shell th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--ink-soft);
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 600;
+}
+.admin-shell td {
+    padding: 10px 12px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+}
+.admin-shell tr:last-child td { border-bottom: none; }
+.admin-shell .field-input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 11px;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+}
+.admin-shell .field-input:focus {
+    border-color: var(--umk-green);
+    box-shadow: 0 0 0 3px rgba(0,102,54,0.12);
+}
+.admin-shell .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(1,20,10,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+}
+.admin-shell .progress-track { background: #e9efe9; border-radius: 999px; height: 8px; overflow: hidden; }
+.admin-shell .progress-fill { background: var(--umk-green); height: 100%; border-radius: 999px; transition: width .4s; }
+.admin-shell .drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 39; }
+.admin-shell .viewfinder { position: relative; aspect-ratio: 1/1; background: #0d1a12; border-radius: 20px; overflow: hidden; }
+.admin-shell .viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+.admin-shell #sidebar { transition: transform .2s ease; }
+@media (max-width: 767px) {
+    .admin-shell #sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        z-index: 40;
+        transform: translateX(-100%);
+    }
+    .admin-shell #sidebar.open { transform: translateX(0); }
+}
+
+/* Mahasiswa app (Presensi PKKMB) — mobile-first, scoped like .admin-shell. */
+.mahasiswa-shell {
+    --umk-green: #006636;
+    --umk-green-dark: #00381d;
+    --umk-gold: #f3f005;
+    --umk-red: #a10101;
+    --paper: #f4f7f2;
+    --ink: #122016;
+    --ink-soft: #5b665d;
+    --line: #e6ebe5;
+
+    background: #e7ebe6;
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+}
+.mahasiswa-shell h1,
+.mahasiswa-shell h2,
+.mahasiswa-shell h3,
+.mahasiswa-shell .display {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.mahasiswa-shell .ms-app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+}
+.mahasiswa-shell .ms-content { flex: 1; padding-bottom: 96px; }
+.mahasiswa-shell .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.mahasiswa-shell .btn {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 14px;
+    border-radius: 9px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: .15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+.mahasiswa-shell .btn-primary { background: var(--umk-green); color: #fff; }
+.mahasiswa-shell .btn-primary:hover { background: var(--umk-green-dark); }
+.mahasiswa-shell .btn-gold { background: var(--umk-gold); color: #3a3300; }
+.mahasiswa-shell .btn-outline { background: #fff; color: var(--umk-green); border-color: var(--umk-green); }
+.mahasiswa-shell .btn-danger { background: #fff; color: var(--umk-red); border-color: #f0c6c6; }
+.mahasiswa-shell .field-input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 8px 11px;
+    font-size: 13px;
+    background: #fff;
+    outline: none;
+}
+.mahasiswa-shell .field-input:focus { border-color: var(--umk-green); box-shadow: 0 0 0 3px rgba(0,102,54,0.12); }
+.mahasiswa-shell .pill { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 999px; letter-spacing: .02em; }
+.mahasiswa-shell .pill-active { background: #e2f4e6; color: #0a6b34; }
+.mahasiswa-shell .pill-closed { background: #f2f2f2; color: #6b6b6b; }
+.mahasiswa-shell .pill-notyet { background: #fdf3d8; color: #8a6a00; }
+.mahasiswa-shell .pill-done { background: #e6eefc; color: #1d4ea0; }
+.mahasiswa-shell .chip {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.mahasiswa-shell .chip.active { background: var(--umk-green); border-color: var(--umk-green); color: #fff; }
+.mahasiswa-shell .checklist-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--ink-soft); }
+.mahasiswa-shell .checklist-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+.mahasiswa-shell .checklist-item.done .checklist-dot { background: var(--umk-green); border-color: var(--umk-green); color: #fff; }
+.mahasiswa-shell .checklist-item.done { color: var(--ink); }
+.mahasiswa-shell .checklist-item.fail .checklist-dot { background: var(--umk-red); border-color: var(--umk-red); color: #fff; }
+.mahasiswa-shell .checklist-item.fail { color: var(--umk-red); }
+.mahasiswa-shell .viewfinder { position: relative; aspect-ratio: 1/1; background: #0d1a12; border-radius: 20px; overflow: hidden; }
+.mahasiswa-shell .viewfinder video { width: 100%; height: 100%; object-fit: cover; }
+.mahasiswa-shell .vf-corner { position: absolute; width: 26px; height: 26px; border-color: var(--umk-gold); pointer-events: none; }
+.mahasiswa-shell .ms-navbar {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 480px;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    height: 66px;
+    z-index: 30;
+}
+.mahasiswa-shell .ms-navrow { display: flex; align-items: center; height: 100%; }
+.mahasiswa-shell .navitem { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; cursor: pointer; color: var(--ink-soft); text-decoration: none; }
+.mahasiswa-shell .navitem.active { color: var(--umk-green); }
+.mahasiswa-shell .navitem i { font-size: 20px; }
+.mahasiswa-shell .navitem span { font-size: 10px; font-weight: 600; }
+.mahasiswa-shell .navcenter {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translate(-50%, -46%);
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--umk-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 8px 16px -4px rgba(0,102,54,0.5), 0 0 0 5px #fff;
+    cursor: pointer;
+    text-decoration: none;
+}
+.mahasiswa-shell .navcenter i { font-size: 24px; }
