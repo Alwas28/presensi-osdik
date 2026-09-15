@@ -4,9 +4,11 @@ use App\Imports\MahasiswaImport;
 use App\Models\Fakultas;
 use App\Models\Mahasiswa;
 use App\Models\ProgramStudi;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Validator;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Validate;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -31,6 +33,35 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
     /** @var list<string> */
     public array $importErrors = [];
 
+    public bool $showAddModal = false;
+
+    #[Validate('required|string|max:50|unique:mahasiswas,nim')]
+    public string $newNim = '';
+
+    #[Validate('required|string|max:255')]
+    public string $newNama = '';
+
+    #[Validate('nullable|string|max:50')]
+    public string $newNoRegistrasi = '';
+
+    #[Validate('nullable|string|max:30')]
+    public string $newNoTelp = '';
+
+    #[Validate('nullable|string|max:100')]
+    public string $newStatusPendaftar = '';
+
+    #[Validate('nullable|string|max:100')]
+    public string $newJalur = '';
+
+    #[Validate('nullable|integer|min:2000|max:2100')]
+    public string $newAngkatan = '';
+
+    #[Validate('required|exists:fakultas,id')]
+    public string $newFakultasId = '';
+
+    #[Validate('required|exists:program_studis,id')]
+    public string $newProdiId = '';
+
     public function updatingSearch(): void
     {
         $this->resetPage();
@@ -47,6 +78,11 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
         $this->resetPage();
     }
 
+    public function updatingNewFakultasId(): void
+    {
+        $this->newProdiId = '';
+    }
+
     #[Computed]
     public function fakultasList()
     {
@@ -61,6 +97,16 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
         }
 
         return ProgramStudi::query()->where('fakultas_id', $this->fakultas)->orderBy('name')->get();
+    }
+
+    #[Computed]
+    public function newProdiOptions()
+    {
+        if (! $this->newFakultasId) {
+            return collect();
+        }
+
+        return ProgramStudi::query()->where('fakultas_id', $this->newFakultasId)->orderBy('name')->get();
     }
 
     #[Computed]
@@ -105,6 +151,49 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
         $this->importFile = null;
         $this->resetPage();
     }
+
+    public function openAddModal(): void
+    {
+        $this->reset([
+            'newNim', 'newNama', 'newNoRegistrasi', 'newNoTelp',
+            'newStatusPendaftar', 'newJalur', 'newAngkatan', 'newFakultasId', 'newProdiId',
+        ]);
+        $this->resetErrorBag();
+        $this->showAddModal = true;
+    }
+
+    public function closeAddModal(): void
+    {
+        $this->showAddModal = false;
+    }
+
+    public function saveMahasiswa(): void
+    {
+        $this->validate();
+
+        try {
+            $mahasiswa = Mahasiswa::create([
+                'nim' => $this->newNim,
+                'nama' => $this->newNama,
+                'no_registrasi' => $this->newNoRegistrasi ?: null,
+                'no_telp' => $this->newNoTelp ?: null,
+                'status_pendaftar' => $this->newStatusPendaftar ?: null,
+                'jalur' => $this->newJalur ?: null,
+                'angkatan' => $this->newAngkatan ?: null,
+                'program_studi_id' => $this->newProdiId,
+            ]);
+        } catch (QueryException) {
+            $this->addError('newNoRegistrasi', 'No registrasi sudah dipakai mahasiswa lain.');
+
+            return;
+        }
+
+        $mahasiswa->ensureLoginAccount();
+
+        $this->showAddModal = false;
+        $this->resetPage();
+        unset($this->mahasiswaList);
+    }
 }; ?>
 
 <div>
@@ -134,7 +223,10 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
                     </select>
                 </div>
             </div>
-            <button class="btn btn-primary flex-shrink-0" wire:click="openImportModal"><i class="ti ti-file-import"></i>Import Excel</button>
+            <div class="flex gap-2 flex-shrink-0">
+                <button class="btn btn-outline" wire:click="openAddModal"><i class="ti ti-user-plus"></i>Tambah mahasiswa</button>
+                <button class="btn btn-primary" wire:click="openImportModal"><i class="ti ti-file-import"></i>Import Excel</button>
+            </div>
         </div>
     </div>
 
@@ -186,6 +278,81 @@ new #[Layout('layouts.admin', ['title' => 'Data mahasiswa'])] class extends Comp
                 <div class="flex gap-2 mt-5">
                     <button class="btn btn-ghost flex-1 justify-center" wire:click="closeImportModal">Tutup</button>
                     <button class="btn btn-primary flex-1 justify-center" wire:click="import" wire:loading.attr="disabled" wire:target="import">Proses import</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if ($showAddModal)
+        <div class="modal-backdrop">
+            <div class="card p-6" style="width:460px; max-width:100%; max-height:90vh; overflow-y:auto;">
+                <h3 class="display font-bold text-base mb-4">Tambah mahasiswa</h3>
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">NIM</label>
+                            <input class="field-input" wire:model="newNim" placeholder="Contoh: 22613001">
+                            @error('newNim') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">No registrasi (opsional)</label>
+                            <input class="field-input" wire:model="newNoRegistrasi" placeholder="Contoh: REG-0001">
+                            @error('newNoRegistrasi') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold block mb-1">Nama lengkap</label>
+                        <input class="field-input" wire:model="newNama" placeholder="Nama mahasiswa">
+                        @error('newNama') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Fakultas</label>
+                            <select class="field-input" wire:model.live="newFakultasId">
+                                <option value="">Pilih fakultas</option>
+                                @foreach ($this->fakultasList as $f)
+                                    <option value="{{ $f->id }}">{{ $f->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('newFakultasId') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Program studi</label>
+                            <select class="field-input" wire:model="newProdiId">
+                                <option value="">Pilih prodi</option>
+                                @foreach ($this->newProdiOptions as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                @endforeach
+                            </select>
+                            @error('newProdiId') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Jalur (opsional)</label>
+                            <input class="field-input" wire:model="newJalur" placeholder="Contoh: SNBP">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Angkatan (opsional)</label>
+                            <input type="number" class="field-input" wire:model="newAngkatan" placeholder="Contoh: 2026">
+                            @error('newAngkatan') <p class="text-xs mt-1" style="color:var(--umk-red);">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">No telp (opsional)</label>
+                            <input class="field-input" wire:model="newNoTelp" placeholder="08xxxxxxxxxx">
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Status pendaftar (opsional)</label>
+                            <input class="field-input" wire:model="newStatusPendaftar" placeholder="Contoh: Lulus">
+                        </div>
+                    </div>
+                    <p class="text-xs" style="color:var(--ink-soft);">Akun login otomatis dibuat: NIM sebagai username dan password default.</p>
+                </div>
+                <div class="flex gap-2 mt-5">
+                    <button class="btn btn-ghost flex-1 justify-center" wire:click="closeAddModal">Batal</button>
+                    <button class="btn btn-primary flex-1 justify-center" wire:click="saveMahasiswa">Simpan</button>
                 </div>
             </div>
         </div>

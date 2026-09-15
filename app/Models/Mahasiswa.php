@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Hash;
 
 #[Fillable([
     'no_registrasi',
@@ -61,5 +62,30 @@ class Mahasiswa extends Model
     public function user(): HasOne
     {
         return $this->hasOne(User::class);
+    }
+
+    /**
+     * Every mahasiswa gets a login account: NIM as the identifier and NIM as
+     * the default password. Existing accounts (and any password the student
+     * already changed) are left untouched — safe to call repeatedly.
+     */
+    public function ensureLoginAccount(): User
+    {
+        // Check first so Hash::make() (deliberately slow) only runs for genuinely
+        // new accounts — matters when this runs once per row during a bulk import.
+        $existing = User::query()->where('mahasiswa_id', $this->id)->first();
+
+        if ($existing) {
+            return $existing;
+        }
+
+        return User::query()->create([
+            'mahasiswa_id' => $this->id,
+            'name' => $this->nama,
+            'email' => "{$this->nim}@mahasiswa.osdik.local",
+            'password' => Hash::make($this->nim),
+            'role' => 'mahasiswa',
+            'email_verified_at' => now(),
+        ]);
     }
 }

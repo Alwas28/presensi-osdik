@@ -5,9 +5,7 @@ namespace App\Imports;
 use App\Models\Fakultas;
 use App\Models\Mahasiswa;
 use App\Models\ProgramStudi;
-use App\Models\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -89,31 +87,9 @@ class MahasiswaImport implements ToCollection, WithHeadingRow
                 ]
             );
 
-            $this->provisionLoginFor($mahasiswa);
+            $mahasiswa->ensureLoginAccount();
 
             $exists ? $this->updated++ : $this->created++;
         }
-    }
-
-    /**
-     * Every imported student gets a login account: NIM as the identifier and
-     * NIM as the default password. Existing accounts (and any password the
-     * student already changed) are left untouched on re-import.
-     */
-    private function provisionLoginFor(Mahasiswa $mahasiswa): void
-    {
-        // Check first so Hash::make() (deliberately slow) only runs for genuinely new accounts.
-        if (User::query()->where('mahasiswa_id', $mahasiswa->id)->exists()) {
-            return;
-        }
-
-        User::query()->create([
-            'mahasiswa_id' => $mahasiswa->id,
-            'name' => $mahasiswa->nama,
-            'email' => "{$mahasiswa->nim}@mahasiswa.osdik.local",
-            'password' => Hash::make($mahasiswa->nim),
-            'role' => 'mahasiswa',
-            'email_verified_at' => now(),
-        ]);
     }
 }
