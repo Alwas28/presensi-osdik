@@ -19,6 +19,8 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
 
     public ?string $feedbackType = null;
 
+    public ?string $selfQrPayload = null;
+
     #[Computed]
     public function mahasiswa(): Mahasiswa
     {
@@ -44,14 +46,18 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
             ->first();
     }
 
-    #[Computed]
-    public function selfQrPayload(): ?string
+    /**
+     * Regenerates the student's self-QR token. Kept as a plain property refreshed
+     * by an explicit action (mirroring Admin\QrModal::ensureFreshToken()) instead of
+     * a #[Computed] read only from Alpine — a Computed value never touched from PHP
+     * isn't included in Livewire's normal response payload, so wire:poll wasn't
+     * reliably pushing a fresh token to the displayed QR image.
+     */
+    public function refreshSelfQr(): void
     {
-        if (! $this->activeEvent) {
-            return null;
-        }
-
-        return app(AttendanceRecorder::class)->buildSelfQrPayload($this->mahasiswa, $this->activeEvent);
+        $this->selfQrPayload = $this->activeEvent
+            ? app(AttendanceRecorder::class)->buildSelfQrPayload($this->mahasiswa, $this->activeEvent)
+            : null;
     }
 
     public function setMethod(string $method): void
@@ -59,6 +65,10 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
         $this->method = $method;
         $this->feedback = null;
         $this->feedbackType = null;
+
+        if ($method === 'show') {
+            $this->refreshSelfQr();
+        }
     }
 
     public function checkinWithPayload(string $payload): void
@@ -131,7 +141,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
                 @else
                     <div class="flex flex-col items-center text-center">
                         <div class="flex items-center justify-center p-3 mb-3" style="background:#fff; border:1px solid var(--line); border-radius:12px;"
-                             wire:ignore wire:poll.20s
+                             wire:ignore wire:poll.20s="refreshSelfQr"
                              x-effect="renderSelfQr($refs.selfQrWrap, $wire.selfQrPayload)">
                             <div x-ref="selfQrWrap"></div>
                         </div>
