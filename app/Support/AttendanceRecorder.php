@@ -6,10 +6,10 @@ use App\Exceptions\PresensiException;
 use App\Models\Attendance;
 use App\Models\Event;
 use App\Models\Mahasiswa;
-use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Str;
 
 /**
  * Centralizes the presensi validation rules from the blueprint (token valid?
@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Request;
  */
 class AttendanceRecorder
 {
+    private const SELF_QR_CACHE_PREFIX = 'self-qr:';
+
     /**
      * Record attendance from the event's QR/token, shown on the panitia's screen.
      *
@@ -50,7 +52,7 @@ class AttendanceRecorder
     /**
      * Record attendance from a student's self-displayed QR, scanned by the panitia.
      *
-     * @param  string  $payload  "SELF:{encrypted}" produced by buildSelfQrPayload().
+     * @param  string  $payload  "SELF:{shortToken}" produced by buildSelfQrPayload().
      *
      * @throws PresensiException
      */
@@ -60,15 +62,16 @@ class AttendanceRecorder
             throw new PresensiException('QR ini bukan QR presensi mahasiswa.');
         }
 
-        try {
-            $decoded = json_decode(Crypt::decryptString(substr($payload, 5)), associative: true, flags: JSON_THROW_ON_ERROR);
-        } catch (DecryptException|\JsonException) {
-            throw new PresensiException('QR tidak valid.');
+        $token = substr($payload, 5);
+        $cacheKey = self::SELF_QR_CACHE_PREFIX.$token;
+        $decoded = Cache::get($cacheKey);
+
+        if (! $decoded) {
+            throw new PresensiException('QR sudah kedaluwarsa atau tidak valid, minta mahasiswa membuka ulang halaman presensi.');
         }
 
-        if (now()->timestamp > ($decoded['exp'] ?? 0)) {
-            throw new PresensiException('QR sudah kedaluwarsa, minta mahasiswa membuka ulang halaman presensi.');
-        }
+        // One-time use: once scanned, this exact QR frame can't be replayed.
+        Cache::forget($cacheKey);
 
         $mahasiswa = Mahasiswa::find($decoded['mahasiswa_id'] ?? null);
         $event = Event::find($decoded['event_id'] ?? null);
@@ -85,18 +88,20 @@ class AttendanceRecorder
     }
 
     /**
-     * Build the short-lived, encrypted payload a student's app displays as
-     * their own QR code for a panitia to scan.
+     * Build the short-lived, opaque payload a student's app displays as their
+     * own QR code for a panitia to scan. Kept short (a random token, not an
+     * encrypted blob) so the QR stays low-density and easy to scan phone-to-phone.
      */
     public function buildSelfQrPayload(Mahasiswa $mahasiswa, Event $event, int $ttlSeconds = 90): string
     {
-        $body = json_encode([
+        $token = Str::random(40);
+
+        Cache::put(self::SELF_QR_CACHE_PREFIX.$token, [
             'mahasiswa_id' => $mahasiswa->id,
             'event_id' => $event->id,
-            'exp' => now()->addSeconds($ttlSeconds)->timestamp,
-        ]);
+        ], $ttlSeconds);
 
-        return 'SELF:'.Crypt::encryptString($body);
+        return 'SELF:'.$token;
     }
 
     /**

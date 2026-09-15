@@ -9,7 +9,7 @@ use App\Models\Mahasiswa;
 use App\Models\ProgramStudi;
 use App\Support\AttendanceRecorder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class AttendanceRecorderTest extends TestCase
@@ -105,16 +105,32 @@ class AttendanceRecorderTest extends TestCase
         $mahasiswa = $this->makeMahasiswa();
         $event = Event::factory()->create(['status' => 'aktif']);
 
-        $expired = 'SELF:'.Crypt::encryptString(json_encode([
+        // Store it already-expired instead of waiting out the real TTL.
+        Cache::put('self-qr:expired-token', [
             'mahasiswa_id' => $mahasiswa->id,
             'event_id' => $event->id,
-            'exp' => now()->subMinute()->timestamp,
-        ]));
+        ], now()->subSecond());
 
         $this->expectException(PresensiException::class);
-        $this->expectExceptionMessage('QR sudah kedaluwarsa, minta mahasiswa membuka ulang halaman presensi.');
+        $this->expectExceptionMessage('QR sudah kedaluwarsa atau tidak valid, minta mahasiswa membuka ulang halaman presensi.');
 
-        (new AttendanceRecorder)->recordFromSelfQr($expired);
+        (new AttendanceRecorder)->recordFromSelfQr('SELF:expired-token');
+    }
+
+    public function test_a_self_qr_cannot_be_reused_once_scanned(): void
+    {
+        $mahasiswa = $this->makeMahasiswa();
+        $event = Event::factory()->create(['status' => 'aktif']);
+
+        $recorder = new AttendanceRecorder;
+        $payload = $recorder->buildSelfQrPayload($mahasiswa, $event);
+
+        $recorder->recordFromSelfQr($payload);
+
+        $this->expectException(PresensiException::class);
+        $this->expectExceptionMessage('QR sudah kedaluwarsa atau tidak valid, minta mahasiswa membuka ulang halaman presensi.');
+
+        $recorder->recordFromSelfQr($payload);
     }
 
     public function test_it_rejects_a_self_qr_for_an_inactive_event(): void
