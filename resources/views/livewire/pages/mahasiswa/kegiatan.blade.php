@@ -52,7 +52,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Kegiatan'])] class extends Compon
                         <i class="ti ti-circle-check"></i>Sudah presensi {{ $attendance->check_in->format('H:i') }}
                     </div>
                 @elseif ($event->status === 'aktif')
-                    <a href="{{ route('mahasiswa.presensi', ['event' => $event->id]) }}" wire:navigate class="btn btn-primary w-full">Presensi sekarang</a>
+                    <a href="{{ route('mahasiswa.presensi') }}" wire:navigate class="btn btn-primary w-full">Presensi sekarang</a>
                 @else
                     <p class="text-xs" style="color:var(--ink-soft);">Presensi belum dapat dilakukan.</p>
                 @endif

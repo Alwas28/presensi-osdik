@@ -38,12 +38,15 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
     <p class="text-sm mb-4" style="color:var(--ink-soft);">Arahkan kamera ke QR yang ditampilkan di aplikasi mahasiswa (menu Presensi &rarr; Tunjukkan QR saya). Kegiatan diambil otomatis dari QR, tidak perlu memilih manual.</p>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="card p-4" x-data="adminScanner()">
+        <div class="card p-4" x-data="adminScanner()" x-init="start()">
             <div class="viewfinder mb-3" style="max-width:360px; margin:0 auto;">
                 <div id="admin-qr-reader" style="width:100%; height:100%;"></div>
             </div>
-            <button class="btn btn-primary w-full justify-center" @click="cameraOn ? stop() : start()">
-                <span x-text="cameraOn ? 'Berhenti scan' : 'Mulai scan'"></span>
+            <template x-if="cameraError">
+                <p class="text-xs text-center mb-3" style="color:var(--umk-red);">Kamera tidak bisa diakses. Pastikan browser sudah diberi izin kamera (dan halaman dibuka lewat HTTPS atau localhost), lalu coba lagi.</p>
+            </template>
+            <button class="btn btn-primary w-full justify-center" @click="cameraOn ? stop() : start()" :disabled="starting">
+                <span x-text="starting ? 'Meminta izin kamera...' : (cameraOn ? 'Berhenti scan' : 'Mulai scan')"></span>
             </button>
         </div>
 
@@ -74,11 +77,19 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
 <script>
     Alpine.data('adminScanner', () => ({
         cameraOn: false,
+        cameraError: false,
+        starting: false,
         html5Qr: null,
         busy: false,
 
         start() {
-            this.cameraOn = true;
+            if (this.cameraOn || this.starting) return;
+            if (typeof window.Html5Qrcode === 'undefined') {
+                this.cameraError = true;
+                return;
+            }
+            this.starting = true;
+            this.cameraError = false;
             this.$nextTick(() => {
                 this.html5Qr = new Html5Qrcode('admin-qr-reader');
                 this.html5Qr.start(
@@ -92,17 +103,27 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
                         });
                     },
                     () => {}
-                ).catch(() => {
+                ).then(() => {
+                    this.cameraOn = true;
+                    this.starting = false;
+                }).catch(() => {
                     this.cameraOn = false;
+                    this.starting = false;
+                    this.cameraError = true;
                 });
             });
         },
         stop() {
-            if (this.html5Qr) {
-                this.html5Qr.stop().then(() => this.html5Qr.clear()).catch(() => {});
-                this.html5Qr = null;
-            }
             this.cameraOn = false;
+            this.starting = false;
+            if (this.html5Qr) {
+                const instance = this.html5Qr;
+                this.html5Qr = null;
+                instance.stop().then(() => instance.clear()).catch(() => {});
+            }
+        },
+        destroy() {
+            this.stop();
         },
     }));
 </script>

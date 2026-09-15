@@ -91,7 +91,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Beranda'])] class extends Compone
                     <i class="ti ti-circle-check"></i>Sudah presensi {{ $this->attendanceForActive->check_in->format('H:i') }}
                 </div>
             @else
-                <a href="{{ route('mahasiswa.presensi', ['event' => $this->activeEvent->id]) }}" wire:navigate class="btn btn-gold w-full">Presensi sekarang</a>
+                <a href="{{ route('mahasiswa.presensi') }}" wire:navigate class="btn btn-gold w-full">Presensi sekarang</a>
             @endif
         </div>
     @endif
