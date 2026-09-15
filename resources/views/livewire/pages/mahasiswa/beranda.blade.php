@@ -17,7 +17,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Beranda'])] class extends Compone
     #[Computed]
     public function activeEvent(): ?Event
     {
-        return Event::query()->where('status', 'aktif')->first()
+        return Event::currentFor($this->mahasiswa)
             ?? Event::query()->orderBy('tanggal')->orderBy('jam_mulai')->first();
     }
 

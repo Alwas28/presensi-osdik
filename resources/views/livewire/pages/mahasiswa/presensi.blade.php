@@ -28,7 +28,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
     #[Computed]
     public function activeEvent(): ?Event
     {
-        return Event::query()->where('status', 'aktif')->first();
+        return Event::currentFor($this->mahasiswa);
     }
 
     #[Computed]

@@ -67,4 +67,20 @@ class Event extends Model
 
         return $this->token_generated_at->diffInSeconds(now(), true) <= 60;
     }
+
+    /**
+     * The "current" active event for a student: an aktif event they haven't
+     * attended yet, if there is one. Falls back to any aktif event (which will
+     * then read as already attended) rather than hiding presensi entirely just
+     * because more than one session happens to be open at once.
+     */
+    public static function currentFor(Mahasiswa $mahasiswa): ?self
+    {
+        $attendedEventIds = Attendance::query()
+            ->where('mahasiswa_id', $mahasiswa->id)
+            ->pluck('event_id');
+
+        return static::query()->where('status', 'aktif')->whereNotIn('id', $attendedEventIds)->first()
+            ?? static::query()->where('status', 'aktif')->first();
+    }
 }

@@ -77,7 +77,19 @@ new #[Layout('layouts.admin', ['title' => 'Kelola kegiatan'])] class extends Com
     public function toggleStatus(int $eventId): void
     {
         $event = Event::findOrFail($eventId);
-        $event->status = $event->status === 'aktif' ? 'ditutup' : 'aktif';
+
+        if ($event->status === 'aktif') {
+            $event->status = 'ditutup';
+            $event->save();
+
+            return;
+        }
+
+        // Only one kegiatan is meant to be open for presensi at a time — the
+        // mahasiswa app shows a single "currently open" session, not a picker.
+        Event::query()->where('status', 'aktif')->where('id', '!=', $event->id)->update(['status' => 'ditutup']);
+
+        $event->status = 'aktif';
         $event->save();
     }
 
