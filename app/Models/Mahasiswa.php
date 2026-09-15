@@ -42,6 +42,14 @@ class Mahasiswa extends Model
         return $this->hasMany(Attendance::class);
     }
 
+    /**
+     * @return HasMany<Aduan, $this>
+     */
+    public function aduans(): HasMany
+    {
+        return $this->hasMany(Aduan::class);
+    }
+
     public function fakultas(): ?Fakultas
     {
         return $this->programStudi?->fakultas;

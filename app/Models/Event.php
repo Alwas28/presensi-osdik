@@ -18,6 +18,9 @@ use Illuminate\Support\Str;
     'deskripsi',
     'status',
     'metode_presensi',
+    'izinkan_presensi_manual',
+    'jam_mulai_presensi',
+    'jam_selesai_presensi',
 ])]
 class Event extends Model
 {
@@ -32,6 +35,7 @@ class Event extends Model
         return [
             'tanggal' => 'date',
             'token_generated_at' => 'datetime',
+            'izinkan_presensi_manual' => 'boolean',
         ];
     }
 
@@ -66,6 +70,25 @@ class Event extends Model
         }
 
         return $this->token_generated_at->diffInSeconds(now(), true) <= 60;
+    }
+
+    /**
+     * Whether "now" falls inside this event's optional presensi window (e.g.
+     * 13:00-15:00). An event without a window set has no time restriction
+     * beyond its aktif/ditutup status.
+     */
+    public function isWithinPresensiWindow(): bool
+    {
+        if (! $this->jam_mulai_presensi || ! $this->jam_selesai_presensi) {
+            return true;
+        }
+
+        $date = $this->tanggal->toDateString();
+
+        return now()->between(
+            "{$date} {$this->jam_mulai_presensi}",
+            "{$date} {$this->jam_selesai_presensi}",
+        );
     }
 
     /**

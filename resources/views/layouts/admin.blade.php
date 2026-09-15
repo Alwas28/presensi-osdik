@@ -40,17 +40,32 @@
         </div>
         <nav class="flex-1 px-3 space-y-1 mt-2">
             @php
-                $navItems = [
-                    ['route' => 'admin.dashboard', 'icon' => 'ti-layout-dashboard', 'label' => 'Dashboard'],
-                    ['route' => 'admin.kegiatan', 'icon' => 'ti-calendar-event', 'label' => 'Kegiatan'],
-                    ['route' => 'admin.monitoring', 'icon' => 'ti-activity', 'label' => 'Monitoring'],
-                    ['route' => 'admin.scan-presensi', 'icon' => 'ti-scan', 'label' => 'Scan presensi'],
-                    ['route' => 'admin.mahasiswa', 'icon' => 'ti-users', 'label' => 'Data mahasiswa'],
-                    ['route' => 'admin.laporan', 'icon' => 'ti-file-analytics', 'label' => 'Laporan'],
-                ];
+                $navItems = [];
+
+                if (auth()->user()->isAdmin()) {
+                    $navItems[] = ['route' => 'admin.dashboard', 'icon' => 'ti-layout-dashboard', 'label' => 'Dashboard'];
+                    $navItems[] = ['route' => 'admin.kegiatan', 'icon' => 'ti-calendar-event', 'label' => 'Kegiatan'];
+                    $navItems[] = ['route' => 'admin.monitoring', 'icon' => 'ti-activity', 'label' => 'Monitoring'];
+                }
+
+                $navItems[] = ['route' => 'admin.scan-presensi', 'icon' => 'ti-scan', 'label' => 'Scan presensi'];
+
+                if (auth()->user()->isPresensi()) {
+                    $navItems[] = ['route' => 'admin.layar', 'icon' => 'ti-device-tv', 'label' => 'Tampilkan layar', 'target' => '_blank'];
+                }
+
+                if (auth()->user()->isAdmin()) {
+                    $navItems[] = ['route' => 'admin.mahasiswa', 'icon' => 'ti-users', 'label' => 'Data mahasiswa'];
+                    $navItems[] = ['route' => 'admin.laporan', 'icon' => 'ti-file-analytics', 'label' => 'Laporan'];
+                }
+
+                if (auth()->user()->isSuperAdmin()) {
+                    $navItems[] = ['route' => 'admin.pengguna', 'icon' => 'ti-users-plus', 'label' => 'Pengguna'];
+                    $navItems[] = ['route' => 'admin.aduan', 'icon' => 'ti-message-report', 'label' => 'Aduan'];
+                }
             @endphp
             @foreach ($navItems as $item)
-                <a href="{{ route($item['route']) }}" wire:navigate
+                <a href="{{ route($item['route']) }}" @if(($item['target'] ?? null) === '_blank') target="_blank" @else wire:navigate @endif
                    class="navlink {{ request()->routeIs($item['route']) ? 'active' : '' }}">
                     <i class="ti {{ $item['icon'] }}"></i>{{ $item['label'] }}
                 </a>
@@ -63,7 +78,13 @@
                 </div>
                 <div class="leading-tight min-w-0">
                     <p class="text-white text-xs font-semibold truncate">{{ auth()->user()->name }}</p>
-                    <p class="text-xs truncate" style="color:#9fc6a9;">{{ auth()->user()->role === 'super_admin' ? 'Super Admin' : 'Panitia' }}</p>
+                    <p class="text-xs truncate" style="color:#9fc6a9;">
+                        {{ match (auth()->user()->role) {
+                            'super_admin' => 'Super Admin',
+                            'presensi' => 'Petugas Presensi',
+                            default => 'Panitia',
+                        } }}
+                    </p>
                 </div>
             </div>
         </div>

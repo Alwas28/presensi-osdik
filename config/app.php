@@ -65,7 +65,8 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    // Waktu Indonesia Timur (WIT, UTC+9).
+    'timezone' => 'Asia/Jayapura',
 
     /*
     |--------------------------------------------------------------------------

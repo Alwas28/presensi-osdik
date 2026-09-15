@@ -37,5 +37,13 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Profil'])] class extends Componen
         </div>
     </div>
 
+    <a href="{{ route('mahasiswa.aduan') }}" wire:navigate class="card p-4 mb-4 flex items-center justify-between">
+        <span class="flex items-center gap-2.5 text-sm font-medium">
+            <i class="ti ti-message-report" style="font-size:18px; color:var(--umk-green);"></i>
+            Form Aduan
+        </span>
+        <i class="ti ti-chevron-right" style="color:var(--ink-soft);"></i>
+    </a>
+
     <livewire:mahasiswa.logout-button />
 </div>

@@ -11,6 +11,8 @@ new #[Layout('layouts.display', ['title' => 'Layar Presensi'])] class extends Co
     #[Url(as: 'event')]
     public ?int $eventId = null;
 
+    public ?string $qrPayload = null;
+
     public function mount(): void
     {
         $this->eventId = $this->eventId ?: Event::query()->where('status', 'aktif')->value('id');
@@ -35,14 +37,6 @@ new #[Layout('layouts.display', ['title' => 'Layar Presensi'])] class extends Co
         return max(0, 60 - $event->token_generated_at->diffInSeconds(now(), true));
     }
 
-    #[Computed]
-    public function qrPayload(): ?string
-    {
-        $event = $this->event;
-
-        return $event?->current_token ? "EVT:{$event->id}:{$event->current_token}" : null;
-    }
-
     public function tick(): void
     {
         // Follow whichever event the panitia has open, in case it changes while this screen is up.
@@ -50,11 +44,19 @@ new #[Layout('layouts.display', ['title' => 'Layar Presensi'])] class extends Co
         $this->ensureFreshToken();
     }
 
+    /**
+     * Mirrors Admin\QrModal::ensureFreshToken() — qrPayload is a plain property
+     * set here explicitly instead of a #[Computed] read only from Alpine, since
+     * Livewire won't reliably push an untouched Computed value to the client on
+     * every wire:poll tick.
+     */
     private function ensureFreshToken(): void
     {
         $event = $this->event;
 
         if (! $event || $event->status !== 'aktif') {
+            $this->qrPayload = null;
+
             return;
         }
 
@@ -68,6 +70,8 @@ new #[Layout('layouts.display', ['title' => 'Layar Presensi'])] class extends Co
         if (! $event->current_token || $remaining <= 0) {
             $event->rotateToken();
         }
+
+        $this->qrPayload = "EVT:{$event->id}:{$event->current_token}";
     }
 }; ?>
 

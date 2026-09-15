@@ -46,7 +46,7 @@ class AttendanceRecorder
             throw new PresensiException('Token QR tidak valid atau sudah kedaluwarsa, coba lagi.');
         }
 
-        return $this->createAttendance($mahasiswa, $event);
+        return $this->createAttendance($mahasiswa, $event, 'qr_event');
     }
 
     /**
@@ -84,7 +84,28 @@ class AttendanceRecorder
             throw new PresensiException('Kegiatan belum dibuka atau sudah ditutup untuk presensi.');
         }
 
-        return $this->createAttendance($mahasiswa, $event);
+        return $this->createAttendance($mahasiswa, $event, 'qr_self');
+    }
+
+    /**
+     * Record attendance from the manual fallback button, shown to a student only
+     * when the panitia has enabled it for a specific event (e.g. because the QR
+     * flow isn't working for them). Still gated on the event being aktif and on
+     * the once-per-event uniqueness check, same as every other check-in path.
+     *
+     * @throws PresensiException
+     */
+    public function recordManualCheckin(Mahasiswa $mahasiswa, Event $event): Attendance
+    {
+        if ($event->status !== 'aktif') {
+            throw new PresensiException('Kegiatan belum dibuka atau sudah ditutup untuk presensi.');
+        }
+
+        if (! $event->izinkan_presensi_manual) {
+            throw new PresensiException('Presensi manual belum diaktifkan panitia untuk kegiatan ini.');
+        }
+
+        return $this->createAttendance($mahasiswa, $event, 'manual');
     }
 
     /**
@@ -131,8 +152,16 @@ class AttendanceRecorder
     /**
      * @throws PresensiException
      */
-    private function createAttendance(Mahasiswa $mahasiswa, Event $event): Attendance
+    private function createAttendance(Mahasiswa $mahasiswa, Event $event, string $channel): Attendance
     {
+        if (! $event->isWithinPresensiWindow()) {
+            throw new PresensiException(sprintf(
+                'Presensi hanya bisa dilakukan pukul %s - %s.',
+                substr($event->jam_mulai_presensi, 0, 5),
+                substr($event->jam_selesai_presensi, 0, 5),
+            ));
+        }
+
         if (Attendance::query()->where('mahasiswa_id', $mahasiswa->id)->where('event_id', $event->id)->exists()) {
             throw new PresensiException('Kamu sudah presensi untuk kegiatan ini.');
         }
@@ -146,6 +175,7 @@ class AttendanceRecorder
                 'ip_address' => Request::ip(),
                 'device' => Request::userAgent(),
                 'status' => 'hadir',
+                'channel' => $channel,
             ]);
         } catch (QueryException) {
             throw new PresensiException('Kamu sudah presensi untuk kegiatan ini.');

@@ -13,8 +13,6 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
 {
     public string $method = 'scan';
 
-    public string $manualToken = '';
-
     public ?string $feedback = null;
 
     public ?string $feedbackType = null;
@@ -83,6 +81,30 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
             $this->feedback = $e->getMessage();
         }
     }
+
+    /**
+     * Fallback for when scanning the QR just isn't working for this student —
+     * only available when the panitia has switched it on for the active event.
+     */
+    public function manualCheckin(): void
+    {
+        if (! $this->activeEvent) {
+            $this->feedbackType = 'error';
+            $this->feedback = 'Kegiatan tidak ditemukan.';
+
+            return;
+        }
+
+        try {
+            $attendance = app(AttendanceRecorder::class)->recordManualCheckin($this->mahasiswa, $this->activeEvent);
+            $this->feedbackType = 'success';
+            $this->feedback = 'Presensi manual berhasil dicatat pukul '.$attendance->check_in->format('H:i').'.';
+            $this->dispatch('presensi-berhasil', message: $this->feedback);
+        } catch (PresensiException $e) {
+            $this->feedbackType = 'error';
+            $this->feedback = $e->getMessage();
+        }
+    }
 }; ?>
 
 <div class="p-5 pb-2">
@@ -128,16 +150,18 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
                         </template>
                     </div>
                     <template x-if="cameraError">
-                        <p class="text-xs text-center mb-3" style="color:var(--umk-red);">Kamera tidak bisa diakses. Pastikan izin kamera sudah diberikan di pengaturan browser, atau gunakan token manual di bawah.</p>
+                        <p class="text-xs text-center mb-3" style="color:var(--umk-red);">
+                            Kamera tidak bisa diakses. Pastikan izin kamera sudah diberikan di pengaturan browser{{ $this->activeEvent->izinkan_presensi_manual ? ', atau gunakan Presensi Manual di bawah.' : '.' }}
+                        </p>
                     </template>
                     <button class="btn btn-primary w-full mb-3" @click="cameraOn ? stopCamera() : startCamera()" :disabled="starting">
                         <span x-text="starting ? 'Meminta izin kamera...' : (cameraOn ? 'Berhenti scan' : 'Mulai scan')"></span>
                     </button>
-                    <p class="text-xs text-center mb-3" style="color:var(--ink-soft);">atau masukkan token manual</p>
-                    <div class="flex gap-2">
-                        <input class="field-input flex-1" wire:model="manualToken" placeholder="Kode token">
-                        <button type="button" class="btn btn-primary" style="padding:8px 16px;" @click="submitManualToken()">Kirim</button>
-                    </div>
+                    @if ($this->activeEvent->izinkan_presensi_manual)
+                        <button type="button" class="btn btn-outline w-full" wire:click="manualCheckin">
+                            <i class="ti ti-hand-click"></i>Presensi Manual
+                        </button>
+                    @endif
                 @else
                     <div class="flex flex-col items-center text-center">
                         <div class="flex items-center justify-center p-4 mb-3" style="background:#fff; border:1px solid var(--line); border-radius:12px;"
@@ -170,7 +194,12 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
     window.renderSelfQr = window.renderSelfQr || function (wrap, payload) {
         if (!wrap || !payload) return;
         wrap.innerHTML = '';
-        new QRCode(wrap, { text: payload, width: 240, height: 240, colorDark: '#122016', colorLight: '#ffffff' });
+        // Size the QR off the actual available width instead of a fixed value, so it
+        // fills as much of the screen as it safely can on any phone (and stays capped
+        // on the desktop-width preview, since .ms-app itself maxes out at 480px).
+        const containerWidth = document.querySelector('.ms-app')?.clientWidth || window.innerWidth;
+        const size = Math.min(340, Math.max(240, containerWidth - 80));
+        new QRCode(wrap, { text: payload, width: size, height: size, colorDark: '#122016', colorLight: '#ffffff' });
     };
 
     Alpine.data('presensiPanel', () => ({
@@ -248,11 +277,6 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
         destroy() {
             this.stopCamera();
         },
-        submitManualToken() {
-            const token = (this.$wire.manualToken || '').trim();
-            if (!token) return;
-            this.runCheckin(token);
-        },
         async runCheckin(payload) {
             this.checking = true;
             this.stepFailed = false;
@@ -262,7 +286,6 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
                 this.stepIndex = i;
             }
             await this.$wire.checkinWithPayload(payload);
-            this.$wire.manualToken = '';
             this.stepIndex = this.steps.length - 1;
             this.stepFailed = this.$wire.feedbackType === 'error';
             await new Promise((r) => setTimeout(r, 500));

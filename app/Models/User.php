@@ -41,9 +41,23 @@ class User extends Authenticatable
         return $this->role === 'panitia';
     }
 
+    public function isPresensi(): bool
+    {
+        return $this->role === 'presensi';
+    }
+
     public function isAdmin(): bool
     {
         return in_array($this->role, ['super_admin', 'panitia'], true);
+    }
+
+    /**
+     * Anyone allowed into the admin area at all — full admins plus the
+     * presensi role, which only scans/shows QR codes at the venue.
+     */
+    public function isStaff(): bool
+    {
+        return in_array($this->role, ['super_admin', 'panitia', 'presensi'], true);
     }
 
     public function isMahasiswa(): bool

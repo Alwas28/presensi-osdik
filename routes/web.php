@@ -12,6 +12,10 @@ Route::get('/', function (Request $request) {
 });
 
 Route::get('dashboard', function (Request $request) {
+    if ($request->user()->isPresensi()) {
+        return redirect()->route('admin.scan-presensi');
+    }
+
     if ($request->user()->isAdmin()) {
         return redirect()->route('admin.dashboard');
     }

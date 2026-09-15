@@ -48,6 +48,16 @@ class OsdikDemoSeeder extends Seeder
                 'role' => 'panitia',
             ]
         );
+
+        User::query()->firstOrCreate(
+            ['email' => 'presensi@umkendari.ac.id'],
+            [
+                'name' => 'Petugas Presensi',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+                'role' => 'presensi',
+            ]
+        );
     }
 
     /**
