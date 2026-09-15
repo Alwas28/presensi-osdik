@@ -21,6 +21,8 @@
 </head>
 <body class="mahasiswa-shell">
 
+<x-success-toast />
+
 <div class="ms-app">
     <main class="ms-content">
         {{ $slot }}

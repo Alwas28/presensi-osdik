@@ -24,6 +24,8 @@
 </head>
 <body class="min-h-screen admin-shell">
 
+<x-success-toast event="presensi-panitia-berhasil" />
+
 <div class="flex min-h-screen" x-data="{ drawerOpen: false }">
 
     <div class="drawer-overlay md:hidden" x-show="drawerOpen" x-cloak @click="drawerOpen = false" style="display:none;"></div>

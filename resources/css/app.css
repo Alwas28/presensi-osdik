@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { display: none !important; }
+
 /* Admin panel (Presensi Osdik) — scoped so it never leaks into Breeze pages. */
 .admin-shell {
     --umk-green: #006636;

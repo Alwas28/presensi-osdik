@@ -67,6 +67,7 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
             $attendance = app(AttendanceRecorder::class)->recordFromEventQr($this->mahasiswa, $payload, $this->activeEvent?->id);
             $this->feedbackType = 'success';
             $this->feedback = 'Presensi berhasil dicatat pukul '.$attendance->check_in->format('H:i').'.';
+            $this->dispatch('presensi-berhasil', message: $this->feedback);
         } catch (PresensiException $e) {
             $this->feedbackType = 'error';
             $this->feedback = $e->getMessage();
@@ -182,23 +183,47 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Presensi'])] class extends Compon
             this.cameraError = false;
             this.$nextTick(() => {
                 this.html5Qr = new Html5Qrcode('qr-reader');
-                this.html5Qr.start(
-                    { facingMode: 'environment' },
-                    { fps: 10, qrbox: 220 },
-                    (decodedText) => {
-                        this.stopCamera();
-                        this.runCheckin(decodedText);
+                const config = {
+                    fps: 10,
+                    // A fixed pixel qrbox can exceed the actual camera viewfinder on some
+                    // devices, silently preventing any code from ever being detected.
+                    // Size it relative to the real viewfinder instead.
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
+
+                        return { width: edge, height: edge };
                     },
-                    () => {}
-                ).then(() => {
+                };
+                const onScan = (decodedText) => {
+                    this.stopCamera();
+                    this.runCheckin(decodedText);
+                };
+                const onFinished = () => {
                     this.cameraOn = true;
                     this.starting = false;
-                }).catch(() => {
+                };
+                const onFailed = (err) => {
                     // Permission denied, no camera available, or insecure (non-HTTPS/localhost) context.
+                    console.error('[presensi] camera start failed:', err);
                     this.cameraOn = false;
                     this.starting = false;
                     this.cameraError = true;
-                });
+                };
+
+                this.html5Qr.start({ facingMode: 'environment' }, config, onScan, () => {})
+                    .then(onFinished)
+                    .catch(() => {
+                        // Some devices have no rear-facing camera — fall back to whatever
+                        // camera the browser can actually offer.
+                        Html5Qrcode.getCameras()
+                            .then((cameras) => {
+                                if (!cameras || !cameras.length) throw new Error('Tidak ada kamera terdeteksi.');
+
+                                return this.html5Qr.start(cameras[0].id, config, onScan, () => {});
+                            })
+                            .then(onFinished)
+                            .catch(onFailed);
+                    });
             });
         },
         stopCamera() {

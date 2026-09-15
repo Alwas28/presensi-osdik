@@ -21,6 +21,8 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
                 'success' => true,
                 'message' => 'Hadir — '.$attendance->event->nama,
             ]);
+
+            $this->dispatch('presensi-panitia-berhasil', message: $attendance->mahasiswa->nama.' — presensi berhasil dicatat.');
         } catch (PresensiException $e) {
             array_unshift($this->log, [
                 'name' => '-',
@@ -92,25 +94,50 @@ new #[Layout('layouts.admin', ['title' => 'Scan presensi'])] class extends Compo
             this.cameraError = false;
             this.$nextTick(() => {
                 this.html5Qr = new Html5Qrcode('admin-qr-reader');
-                this.html5Qr.start(
-                    { facingMode: 'environment' },
-                    { fps: 10, qrbox: 240 },
-                    (decodedText) => {
-                        if (this.busy) return;
-                        this.busy = true;
-                        this.$wire.scan(decodedText).finally(() => {
-                            setTimeout(() => { this.busy = false; }, 1200);
-                        });
+                const config = {
+                    fps: 10,
+                    // A fixed pixel qrbox can exceed the actual camera viewfinder on some
+                    // devices, silently preventing any code from ever being detected.
+                    // Size it relative to the real viewfinder instead.
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const edge = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * 0.7);
+
+                        return { width: edge, height: edge };
                     },
-                    () => {}
-                ).then(() => {
+                };
+                const onScan = (decodedText) => {
+                    if (this.busy) return;
+                    this.busy = true;
+                    this.$wire.scan(decodedText).finally(() => {
+                        setTimeout(() => { this.busy = false; }, 1200);
+                    });
+                };
+                const onFinished = () => {
                     this.cameraOn = true;
                     this.starting = false;
-                }).catch(() => {
+                };
+                const onFailed = (err) => {
+                    console.error('[scan-presensi] camera start failed:', err);
                     this.cameraOn = false;
                     this.starting = false;
                     this.cameraError = true;
-                });
+                };
+
+                this.html5Qr.start({ facingMode: 'environment' }, config, onScan, () => {})
+                    .then(onFinished)
+                    .catch(() => {
+                        // Many laptops/desktops have no rear-facing camera, which makes
+                        // facingMode:'environment' fail outright — fall back to whatever
+                        // camera the browser can actually offer.
+                        Html5Qrcode.getCameras()
+                            .then((cameras) => {
+                                if (!cameras || !cameras.length) throw new Error('Tidak ada kamera terdeteksi.');
+
+                                return this.html5Qr.start(cameras[0].id, config, onScan, () => {});
+                            })
+                            .then(onFinished)
+                            .catch(onFailed);
+                    });
             });
         },
         stop() {
