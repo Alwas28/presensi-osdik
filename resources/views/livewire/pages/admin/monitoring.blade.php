@@ -168,7 +168,14 @@ new #[Layout('layouts.admin', ['title' => 'Monitoring real-time'])] class extend
     <div class="card overflow-hidden">
         <div class="flex items-center justify-between p-4 pb-0">
             <h3 class="font-semibold text-sm">Log kehadiran <span class="inline-block" style="width:7px;height:7px;border-radius:999px;background:#2ea043; margin-left:6px;"></span></h3>
-            <span class="text-xs" style="color:var(--ink-soft);">menampilkan {{ min(30, $this->log->count()) }} dari {{ $this->hadirCount }} hadir</span>
+            <div class="flex items-center gap-3">
+                <span class="text-xs" style="color:var(--ink-soft);">menampilkan {{ min(30, $this->log->count()) }} dari {{ $this->hadirCount }} hadir</span>
+                @if ($eventId)
+                    <a class="btn btn-outline" href="{{ route('admin.monitoring.export', array_filter(['event' => $eventId, 'fakultas' => $fakultas, 'prodi' => $prodi, 'status' => $status, 'search' => $search])) }}">
+                        <i class="ti ti-file-spreadsheet"></i>Export Excel
+                    </a>
+                @endif
+            </div>
         </div>
         <div class="overflow-x-auto mt-2">
             <table>
