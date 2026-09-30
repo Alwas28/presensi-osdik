@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\MahasiswaFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +22,9 @@ use Illuminate\Support\Facades\Hash;
     'program_studi_id',
     'angkatan',
     'email',
+    'email_password',
 ])]
+#[Hidden(['email_password'])]
 class Mahasiswa extends Model
 {
     /** @use HasFactory<MahasiswaFactory> */
@@ -49,6 +52,14 @@ class Mahasiswa extends Model
     public function aduans(): HasMany
     {
         return $this->hasMany(Aduan::class);
+    }
+
+    /**
+     * @return HasOne<Sertifikat, $this>
+     */
+    public function sertifikat(): HasOne
+    {
+        return $this->hasOne(Sertifikat::class);
     }
 
     public function fakultas(): ?Fakultas

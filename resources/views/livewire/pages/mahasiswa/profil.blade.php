@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Sertifikat;
+use App\Models\SertifikatSetting;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
@@ -10,6 +12,38 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Profil'])] class extends Componen
     public function mahasiswa()
     {
         return auth()->user()->mahasiswa()->with('programStudi.fakultas')->first();
+    }
+
+    public ?string $sertifikatError = null;
+
+    #[Computed]
+    public function sertifikat(): ?Sertifikat
+    {
+        return $this->mahasiswa->sertifikat;
+    }
+
+    public function generateSertifikat(): void
+    {
+        if ($this->sertifikat) {
+            return;
+        }
+
+        $this->sertifikatError = null;
+
+        // Only students who actually attended at least one kegiatan may claim
+        // a certificate of participation.
+        if (! $this->mahasiswa->attendances()->exists()) {
+            $this->sertifikatError = 'Kamu tidak diizinkan generate sertifikat karena tidak mengikuti kegiatan Osdik.';
+
+            return;
+        }
+
+        Sertifikat::create([
+            'mahasiswa_id' => $this->mahasiswa->id,
+            'nomor' => SertifikatSetting::current()->generateNomor(),
+        ]);
+
+        unset($this->sertifikat);
     }
 }; ?>
 
@@ -44,6 +78,63 @@ new #[Layout('layouts.mahasiswa', ['title' => 'Profil'])] class extends Componen
         </span>
         <i class="ti ti-chevron-right" style="color:var(--ink-soft);"></i>
     </a>
+
+    <div class="card p-4 mb-4" x-data="{ open: false }">
+        <div class="flex items-center gap-2.5 mb-1">
+            <i class="ti ti-mail" style="font-size:18px; color:var(--umk-green);"></i>
+            <span class="text-sm font-semibold">Email Kampus</span>
+        </div>
+        @if ($this->mahasiswa->email && $this->mahasiswa->email_password)
+            <p class="text-xs mb-3" style="color:var(--ink-soft);">Lihat akun email resmi yang diberikan kampus untuk kamu.</p>
+            <button type="button" class="btn btn-primary w-full justify-center" @click="open = true">
+                <i class="ti ti-mail"></i>Lihat Akun Email Kampus
+            </button>
+
+            <div x-show="open" x-cloak class="modal-backdrop" @click.self="open = false">
+                <div class="card p-6" style="width:380px; max-width:100%;">
+                    <h3 class="display font-bold text-base mb-1">Akun Email Kampus</h3>
+                    <p class="text-xs mb-4" style="color:var(--ink-soft);">Ini akun email resmi yang diberikan kampus untuk kamu.</p>
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Email</label>
+                            <div class="field-input" style="background:var(--paper); user-select:all;">{{ $this->mahasiswa->email }}</div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold block mb-1">Password</label>
+                            <div class="field-input" style="background:var(--paper); user-select:all;">{{ $this->mahasiswa->email_password }}</div>
+                        </div>
+                    </div>
+                    <div class="p-3 rounded-lg text-xs font-medium mb-4" style="background:#fdf3d8; color:#8a6a00;">
+                        <i class="ti ti-camera"></i> Screenshot halaman ini sekarang untuk menyimpan akun email kamu. Password ini tidak ditampilkan ulang di tempat lain.
+                    </div>
+                    <button type="button" class="btn btn-ghost w-full justify-center" @click="open = false">Tutup</button>
+                </div>
+            </div>
+        @else
+            <p class="text-xs" style="color:var(--ink-soft);">Akun email kampus belum tersedia untuk NIM kamu.</p>
+        @endif
+    </div>
+
+    <div class="card p-4 mb-4">
+        <div class="flex items-center gap-2.5 mb-1">
+            <i class="ti ti-certificate" style="font-size:18px; color:var(--umk-green);"></i>
+            <span class="text-sm font-semibold">Sertifikat Osdik</span>
+        </div>
+        @if ($this->sertifikat)
+            <p class="text-xs mb-3" style="color:var(--ink-soft);">Nomor: {{ $this->sertifikat->nomor }}</p>
+            <a href="{{ route('mahasiswa.sertifikat.download') }}" class="btn btn-primary w-full justify-center">
+                <i class="ti ti-download"></i>Download Sertifikat
+            </a>
+        @else
+            <p class="text-xs mb-3" style="color:var(--ink-soft);">Buat sertifikat kepesertaan Osdik kamu.</p>
+            @if ($sertifikatError)
+                <div class="p-3 rounded-lg text-xs font-medium mb-3" style="background:#fdeaea; color:var(--umk-red);">{{ $sertifikatError }}</div>
+            @endif
+            <button type="button" class="btn btn-primary w-full justify-center" wire:click="generateSertifikat">
+                <i class="ti ti-certificate"></i>Generate Sertifikat
+            </button>
+        @endif
+    </div>
 
     <livewire:mahasiswa.logout-button />
 </div>

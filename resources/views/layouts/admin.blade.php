@@ -62,6 +62,7 @@
                 if (auth()->user()->isSuperAdmin()) {
                     $navItems[] = ['route' => 'admin.pengguna', 'icon' => 'ti-users-plus', 'label' => 'Pengguna'];
                     $navItems[] = ['route' => 'admin.aduan', 'icon' => 'ti-message-report', 'label' => 'Aduan'];
+                    $navItems[] = ['route' => 'admin.sertifikat', 'icon' => 'ti-certificate', 'label' => 'Sertifikat'];
                 }
             @endphp
             @foreach ($navItems as $item)

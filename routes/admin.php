@@ -29,5 +29,6 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('admin')->name('admin.'
     Route::middleware('super_admin')->group(function () {
         Volt::route('pengguna', 'pages.admin.pengguna')->name('pengguna');
         Volt::route('aduan', 'pages.admin.aduan')->name('aduan');
+        Volt::route('sertifikat', 'pages.admin.sertifikat')->name('sertifikat');
     });
 });

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Mahasiswa\SertifikatDownloadController;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -12,4 +13,5 @@ Route::middleware(['auth', 'mahasiswa'])->prefix('mahasiswa')->name('mahasiswa.'
     Volt::route('riwayat', 'pages.mahasiswa.riwayat')->name('riwayat');
     Volt::route('profil', 'pages.mahasiswa.profil')->name('profil');
     Volt::route('aduan', 'pages.mahasiswa.aduan')->name('aduan');
+    Route::get('sertifikat/download', SertifikatDownloadController::class)->name('sertifikat.download');
 });
